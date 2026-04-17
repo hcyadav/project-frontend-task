@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import type {
@@ -12,7 +12,12 @@ import {
   Trash2,
   Loader2,
   UserPlus,
-  RefreshCw
+  RefreshCw,
+  MoreHorizontal,
+  Mail,
+  MapPin,
+  Briefcase,
+  DollarSign
 } from 'lucide-react';
 import { useEmployees, useDeleteEmployee } from '@/hooks/useEmployees';
 import { Button } from '@/components/ui/button';
@@ -27,15 +32,43 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card';
 
 export default function EmployeeList() {
   const navigate = useNavigate();
   const gridRef = useRef<AgGridReact>(null);
   const [quickFilterText, setQuickFilterText] = useState('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: employees = [], isLoading, isError, refetch } = useEmployees();
   const deleteMutation = useDeleteEmployee();
+
+  const filteredEmployees = useMemo(() => {
+    if (!quickFilterText) return employees;
+    const lowerFilter = quickFilterText.toLowerCase();
+    return employees.filter(e =>
+      `${e.firstName} ${e.lastName}`.toLowerCase().includes(lowerFilter) ||
+      e.email.toLowerCase().includes(lowerFilter) ||
+      e.department.toLowerCase().includes(lowerFilter) ||
+      e.position.toLowerCase().includes(lowerFilter) ||
+      e.location.toLowerCase().includes(lowerFilter)
+    );
+  }, [employees, quickFilterText]);
 
   const columnDefs = useMemo<ColDef[]>(() => [
     {
@@ -45,17 +78,24 @@ export default function EmployeeList() {
       flex: 1,
       minWidth: 150
     },
-    { field: 'email', filter: 'agTextColumnFilter', flex: 1.2, minWidth: 200 },
-    { field: 'department', filter: 'agTextColumnFilter', width: 140 },
-    { field: 'position', filter: 'agTextColumnFilter', width: 150 },
+    {
+      field: 'email',
+      filter: 'agTextColumnFilter',
+      flex: 1.2,
+      minWidth: 200,
+      hide: isMobile
+    },
+    { field: 'department', filter: 'agTextColumnFilter', width: 140, hide: isMobile },
+    { field: 'position', filter: 'agTextColumnFilter', width: 150, hide: isMobile },
     {
       field: 'salary',
       valueFormatter: (params) => `${params.value?.toLocaleString()}`,
       filter: 'agNumberColumnFilter',
-      width: 120
+      width: 120,
+      hide: isMobile
     },
-    { field: 'performanceRating', headerName: 'Rating', width: 100, filter: 'agNumberColumnFilter' },
-    { field: 'projectsCompleted', headerName: 'Projects', width: 110, filter: 'agNumberColumnFilter' },
+    { field: 'performanceRating', headerName: 'Rating', width: 100, filter: 'agNumberColumnFilter', hide: isMobile },
+    { field: 'projectsCompleted', headerName: 'Projects', width: 110, filter: 'agNumberColumnFilter', hide: isMobile },
     {
       field: 'isActive',
       headerName: 'Status',
@@ -66,11 +106,11 @@ export default function EmployeeList() {
         </Badge>
       )
     },
-    { field: 'location', width: 130 },
+    { field: 'location', width: 130, hide: isMobile },
     {
       headerName: 'Actions',
-      width: 110,
-      pinned: 'right',
+      width: isMobile ? 80 : 110,
+      pinned: isMobile ? undefined : 'right',
       cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-1 h-full">
           <Button
@@ -92,7 +132,7 @@ export default function EmployeeList() {
         </div>
       ),
     },
-  ], [navigate]);
+  ], [navigate, isMobile]);
 
   const defaultColDef = useMemo<ColDef>(() => ({
     sortable: true,
@@ -115,6 +155,10 @@ export default function EmployeeList() {
   }, [deleteId, deleteMutation]);
 
   const onGridReady = (params: GridReadyEvent) => {
+    params.api.sizeColumnsToFit();
+  };
+
+  const onGridSizeChanged = (params: any) => {
     params.api.sizeColumnsToFit();
   };
 
@@ -166,6 +210,76 @@ export default function EmployeeList() {
             <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground font-medium">Loading employee records...</p>
           </div>
+        ) : isMobile ? (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+            {filteredEmployees.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                No employees found matching your search.
+              </div>
+            ) : (
+              filteredEmployees.map((employee: any) => (
+                <Card key={employee.id} className="shadow-sm border-border/50 hover:border-primary/50 transition-colors">
+                  <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg font-bold">
+                        {employee.firstName} {employee.lastName}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-1">
+                        <Badge variant={employee.isActive ? 'default' : 'secondary'} className="text-[10px] h-5">
+                          {employee.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground ml-1">ID: {employee.id}</span>
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/employee/${employee.id}/edit`)}
+                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteId(employee.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Briefcase className="h-4 w-4 text-primary/70" />
+                      <span className="font-medium text-foreground">{employee.position}</span>
+                      <span className="text-muted-foreground">in</span>
+                      <span className="font-medium text-foreground">{employee.department}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-4 w-4 text-primary/70" />
+                      {employee.email}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4 text-primary/70" />
+                      {employee.location}
+                    </div>
+                    <div className="pt-2 flex items-center justify-between border-t border-border/50">
+                      <div className="flex items-center gap-1.5">
+                        <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                        <span className="font-semibold">{employee.salary?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Rating: {employee.performanceRating}</div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Projects: {employee.projectsCompleted}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         ) : (
           <div className="ag-theme-quartz flex-1 w-full h-full">
             <AgGridReact
@@ -178,6 +292,7 @@ export default function EmployeeList() {
               paginationPageSize={10}
               paginationPageSizeSelector={[10, 20, 50]}
               onGridReady={onGridReady}
+              onGridSizeChanged={onGridSizeChanged}
               quickFilterText={quickFilterText}
               rowHeight={50}
               headerHeight={50}

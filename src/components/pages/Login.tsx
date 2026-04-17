@@ -50,9 +50,7 @@ export default function Login() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormValues) => {
-      // Mocked login API response for now since the backend is not provided
-      // In reality: await api.post('/auth/login', data);
-      return new Promise<{ token: string; user: any }>((resolve) => {
+      return new Promise<{ token: string; user: any }>((resolve, reject) => {
         setTimeout(() => {
           if (data.email === 'admin@example.com' && data.password === 'password123') {
             resolve({
@@ -65,12 +63,7 @@ export default function Login() {
               user: { id: '2', email: data.email, name: 'John Doe' }
             });
           } else {
-            // Mock success anyway for generic testing if we want smooth usage,
-            // but let's be strict for demonstration
-            resolve({
-              token: 'mock-jwt-token-99999',
-              user: { id: '99', email: data.email, name: 'Doctor X' }
-            });
+            reject(new Error('Invalid email or password. Please use the demo credentials provided below.'));
           }
         }, 1000);
       });
@@ -86,7 +79,7 @@ export default function Login() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error?.response?.data?.message || 'Invalid email or password',
+        description: error.message || 'Invalid email or password',
       });
     },
   });
