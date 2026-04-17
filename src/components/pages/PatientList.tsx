@@ -23,13 +23,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_SIZE = 10;
 
 export default function PatientList() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);

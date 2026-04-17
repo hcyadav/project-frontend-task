@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -38,6 +38,7 @@
     "react-hook-form": "^7.72.1",
     "react-router-dom": "^7.14.1",
     "tailwind-merge": "^3.5.0",
+    "vite-plugin-checker": "^0.13.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

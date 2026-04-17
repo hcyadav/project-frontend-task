@@ -7,7 +7,6 @@ import type {
   ICellRendererParams
 } from 'ag-grid-community';
 import {
-  Plus,
   Search,
   Edit,
   Trash2,

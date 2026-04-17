@@ -38,8 +38,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 
 const employeeSchema = z.object({
